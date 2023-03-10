@@ -56,6 +56,7 @@ fun 회사가기(){
 
 ## 마블 다이어그램 보기
 <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdn%2FT2UdP%2FbtqEdxlePoL%2Ftc3nShCYhTFdGYh50SKKK1%2Fimg.png">
+
 마블 다이어 그램을 보는 방법은, 위에 있는 빨간 원이 발행되는 데이터, 중간에 just나 flatMap 같은 함수가 오고, 그 결과가 아래에 나타나게 된다. 또, 위 사진 화살표 마지막 부분에 보면 '|' 이 모양의 기호가 있는데, 이 기호는 onComplete가 되었다는 뜻이다.
 
 ## RxJava 사용해보기
