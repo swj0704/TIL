@@ -137,3 +137,45 @@ suspend fun 회사가기(){
 suspend fun은 kotlin에서 코루틴의 subRoutine을 만드는 키워드이다. 그리고 일어나기, 씻기 등 사람이 하는 동작들은 모두 지연시간이 있는 함수들이다.   
 그리고, 회사가기 함수도 지연시간이 있는 코루틴 함수이기에, 일어나기 함수를 실행하면 회사가기 함수를 잠시 탈출 했다가 끝나면 다시 진입한다.
 
+
+## Coroutine을 어떤 Thread에서 실행할지 결정하는 Dispatcher
+위 내용은 코루틴에 대해서만 관련한 내용이었다면, 이번엔 Coroutine을 배우며 알게 된 Dispatcher에 관해 적어보고자 한다   
+먼저 Dispatch는 '보내다' 라는 뜻이다. 우리가 배우는 Dispatcher는 Coroutine을 Thread에 보낸다. 즉, Dispatcher는 자신이 관리하는 Thread에서 Thread의 부하상태에 맞게 Coroutine을 분배한다. 
+
+### Android Coroutine의 Dispatcher?
+안드로이드에서는 Dispatcher가 만들어져있다.
+위 코드에서도 Dispatchers.IO가 사용된 코드가 있는데, 이는 네트워크 작업을 하는데 최적화 된 Dispatcher라는 뜻이다.
+
+그럼 안드로이드의 Dispatcher들에 대해 알아보자
+
+- Dispatchers.Main : Android의 메인 스레드에서 코루틴을 실행하는 디스페처이다. Android의 메인 스레드는 네트워킹 작업과 같이 오래 걸리는 작업을 하게 되면 ANR이 발생하기 때문에, 이 Dispatcher로는 UI와 상호작용 하는 작업을 위해서만 사용해야한다
+- Dispatchers.IO : Android의 네트워킹 작업이나 DB작업과 같은 I/O 작업에 최적화 되어있는 Dispatcher이다.
+- Dispatchers.Default : CPU를 많이 사용하는 작업을 기본 스레드 외부에서 실행하도록 하는 디스패처이다. 정렬작업아니 Json 파싱 작업에 최적화 되어있다.
+
+내 경험에 LiveData의 SetValue 함수는 Dispatchers.IO에서는 에러가 난다. LiveData를 data Binding와 사용하게 되면 LiveData의 value가 바뀔때 UI가 바뀌기 때문이다. 그렇기 때문에, 시간이 오래걸리는 작업은 Dispatchers.IO에서 하고, liveData에 value를 set 해주는 코드는 Dispatchers.Main에서 진행해야 한다.
+
+```kotlin
+fun getText(){
+    viewModelScope.launch(Dispatchers.IO){
+        val response = api.getText()
+        withContext(Main){
+            _text.value = response.text
+        }
+    }
+}
+```
+
+LiveData의 값을 변경하는 또다른 방법은 Postvalue가 있다.   
+PostValue는 setValue와 다르게 백그라운드 스레드에서 진행하게 되어있어 Dispatchers.IO일때도 에러가 나지 않는다.
+
+```kotlin
+fun getText(){
+    viewModelScope.launch(Dispatchers.IO){
+        val response = api.getText()
+        _text.postValue(response.text)
+    }
+}
+```
+
+위와 같이 진행해도 에러는 나지 않는다.
+다만 postValue의 경우에는 liveData.getValue() 에서 바로 값을 읽어오지 못할 가능성도 있기 때문에, liveData의 value를 써야한다면 withContext를 사용한 위의 방법을 사용하는 것이 좋다.
